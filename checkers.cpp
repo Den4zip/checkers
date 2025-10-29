@@ -178,17 +178,52 @@ private:
         int rowDiff = abs(fromRow - toRow);
         int colDiff = abs(fromCol - toCol);
 
-        if (rowDiff != colDiff) {
+        if (rowDiff != colDiff || rowDiff == 0) {
             return false; // Not a diagonal move
         }
 
-        // Direction check for non-kings
+        jumpedRow = -1;
+        jumpedCol = -1;
+
+        // --- King Logic ---
+        if (abs(piece) == 2) {
+            int r_step = (toRow - fromRow) / rowDiff;
+            int c_step = (toCol - fromCol) / colDiff;
+            int piecesOnPath = 0;
+            int lastPieceRow = -1, lastPieceCol = -1;
+
+            for (int i = 1; i < rowDiff; ++i) {
+                int r = fromRow + i * r_step;
+                int c = fromCol + i * c_step;
+                if (board[r][c] != 0) {
+                    piecesOnPath++;
+                    lastPieceRow = r;
+                    lastPieceCol = c;
+                }
+            }
+
+            if (piecesOnPath == 0) {
+                return true; // Valid move, no jump
+            }
+
+            if (piecesOnPath == 1) {
+                // Check if the single piece on the path is an opponent's piece
+                if (board[lastPieceRow][lastPieceCol] * currentPlayer < 0) {
+                    jumpedRow = lastPieceRow;
+                    jumpedCol = lastPieceCol;
+                    return true; // Valid jump
+                }
+            }
+            
+            return false; // Invalid king move (jumping own piece or >1 piece)
+        }
+
+        // --- Regular Piece Logic ---
+        // Direction check
         if (piece == 1 && fromRow < toRow) return false;
         if (piece == -1 && fromRow > toRow) return false;
 
         if (rowDiff == 1) {
-            jumpedRow = -1;
-            jumpedCol = -1;
             return true; // Simple move
         }
 
